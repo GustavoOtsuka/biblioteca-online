@@ -13,6 +13,9 @@ import java.util.Map;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import java.util.HashMap;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -116,6 +119,25 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
+                .body(body);
+    }
+
+
+    @ExceptionHandler(BookUnavailableException.class)
+    public ResponseEntity<Map<String, Object>> handleBookUnavailable(
+            BookUnavailableException ex,
+            HttpServletRequest request) {
+
+        Map<String, Object> body = new LinkedHashMap<>();
+
+        body.put("timestamp", OffsetDateTime.now(ZoneOffset.UTC));
+        body.put("status", HttpStatus.CONFLICT.value());
+        body.put("error", HttpStatus.CONFLICT.getReasonPhrase());
+        body.put("message", ex.getMessage());
+        body.put("path", request.getRequestURI());
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
                 .body(body);
     }
 

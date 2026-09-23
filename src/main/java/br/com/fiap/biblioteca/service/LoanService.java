@@ -17,6 +17,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
+import br.com.fiap.biblioteca.exception.LoanAlreadyReturnedException;
+import br.com.fiap.biblioteca.exception.LoanNotFoundException;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+
 @Service
 public class LoanService {
 
@@ -70,4 +77,59 @@ public class LoanService {
 
         return new LoanResponse(savedLoan);
     }
+
+
+    @Transactional
+    public LoanResponse returnLoan(Long id) {
+
+        Loan loan = loanRepository.findById(id)
+                .orElseThrow(() -> new LoanNotFoundException(id));
+
+        if (loan.getReturnedAt() != null) {
+            throw new LoanAlreadyReturnedException(id);
+        }
+
+        loan.setReturnedAt(OffsetDateTime.now(ZoneOffset.UTC));
+
+        Book book = loan.getBook();
+        book.setAvailable(true);
+
+        Loan savedLoan = loanRepository.save(loan);
+        bookRepository.save(book);
+
+        return new LoanResponse(savedLoan);
+    }
+
+
+    public LoanResponse findById(Long id) {
+
+        Loan loan = loanRepository.findById(id)
+                .orElseThrow(() -> new LoanNotFoundException(id));
+
+        return new LoanResponse(loan);
+    }
+
+
+    public Page<LoanResponse> findAll(Pageable pageable) {
+        return loanRepository.findAll(pageable)
+                .map(LoanResponse::new);
+    }
+
+
+    public Page<LoanResponse> findByUserId(Long userId, Pageable pageable) {
+
+        if (!libraryUserRepository.existsById(userId)) {
+            throw new LibraryUserNotFoundException(userId);
+        }
+
+        return loanRepository.findByUserId(userId, pageable)
+                .map(LoanResponse::new);
+    }
+
+    public Page<LoanResponse> findActiveLoans(Pageable pageable) {
+        return loanRepository.findByReturnedAtIsNull(pageable)
+                .map(LoanResponse::new);
+    }
+
+
 }

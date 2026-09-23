@@ -10,6 +10,11 @@ import br.com.fiap.biblioteca.exception.BookNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import org.springframework.data.jpa.domain.Specification;
+
 @Service
 public class BookService {
 
@@ -76,6 +81,67 @@ public class BookService {
 
         bookRepository.delete(book);
     }
+
+    public Page<BookResponse> search(
+            String title,
+            String author,
+            String isbn,
+            Boolean available,
+            Pageable pageable) {
+
+        Specification<Book> specification = Specification.unrestricted();
+
+        if (title != null && !title.isBlank()) {
+            String normalizedTitle = title.trim().toLowerCase();
+
+            specification = specification.and(
+                    (root, query, criteriaBuilder) ->
+                            criteriaBuilder.like(
+                                    criteriaBuilder.lower(root.get("title")),
+                                    "%" + normalizedTitle + "%"
+                            )
+            );
+        }
+
+        if (author != null && !author.isBlank()) {
+            String normalizedAuthor = author.trim().toLowerCase();
+
+            specification = specification.and(
+                    (root, query, criteriaBuilder) ->
+                            criteriaBuilder.like(
+                                    criteriaBuilder.lower(root.get("author")),
+                                    "%" + normalizedAuthor + "%"
+                            )
+            );
+        }
+
+        if (isbn != null && !isbn.isBlank()) {
+            String normalizedIsbn = isbn.trim();
+
+            specification = specification.and(
+                    (root, query, criteriaBuilder) ->
+                            criteriaBuilder.equal(
+                                    root.get("isbn"),
+                                    normalizedIsbn
+                            )
+            );
+        }
+
+        if (available != null) {
+            specification = specification.and(
+                    (root, query, criteriaBuilder) ->
+                            criteriaBuilder.equal(
+                                    root.get("available"),
+                                    available
+                            )
+            );
+        }
+
+        return bookRepository.findAll(specification, pageable)
+                .map(BookResponse::new);
+    }
+
+
 
 
 }

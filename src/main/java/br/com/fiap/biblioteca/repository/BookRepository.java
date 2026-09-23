@@ -3,10 +3,14 @@ package br.com.fiap.biblioteca.repository;
 import br.com.fiap.biblioteca.domain.Book;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface BookRepository extends JpaRepository<Book, Long> {
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
+public interface BookRepository extends JpaRepository<Book, Long>,
+        JpaSpecificationExecutor<Book> {
 
     boolean existsByIsbn(String isbn);
 
     boolean existsByIsbnAndIdNot(String isbn, Long id);
+
 
 }

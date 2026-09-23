@@ -40,9 +40,20 @@ public class BookController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<BookResponse>> findAll(Pageable pageable) {
+    public ResponseEntity<Page<BookResponse>> findAll(
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String author,
+            @RequestParam(required = false) String isbn,
+            @RequestParam(required = false) Boolean available,
+            Pageable pageable) {
 
-        Page<BookResponse> response = bookService.findAll(pageable);
+        Page<BookResponse> response = bookService.search(
+                title,
+                author,
+                isbn,
+                available,
+                pageable
+        );
 
         return ResponseEntity.ok(response);
     }

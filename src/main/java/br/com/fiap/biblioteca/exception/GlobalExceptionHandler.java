@@ -239,4 +239,22 @@ public class GlobalExceptionHandler {
     }
 
 
+    @ExceptionHandler(ResourceHasHistoryException.class)
+    public ResponseEntity<Map<String, Object>> handleResourceHasHistory(
+            ResourceHasHistoryException exception,
+            HttpServletRequest request) {
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", Instant.now());
+        body.put("status", HttpStatus.CONFLICT.value());
+        body.put("error", HttpStatus.CONFLICT.getReasonPhrase());
+        body.put("message", exception.getMessage());
+        body.put("path", request.getRequestURI());
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(body);
+    }
+
+
 }

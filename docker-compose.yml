@@ -16,5 +16,17 @@ services:
       timeout: 5s
       retries: 5
 
+  app:
+    build: .
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/biblioteca
+      DB_USERNAME: biblioteca
+      DB_PASSWORD: biblioteca
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   biblioteca_postgres_data:

@@ -15,13 +15,31 @@ import org.springframework.data.domain.Pageable;
 
 import org.springframework.data.jpa.domain.Specification;
 
+
+import br.com.fiap.biblioteca.exception.ResourceHasHistoryException;
+import br.com.fiap.biblioteca.repository.LoanRepository;
+import br.com.fiap.biblioteca.repository.ReservationRepository;
+
+import org.springframework.transaction.annotation.Transactional;
+
+
+
 @Service
 public class BookService {
 
     private final BookRepository bookRepository;
 
-    public BookService(BookRepository bookRepository) {
+    private final LoanRepository loanRepository;
+    private final ReservationRepository reservationRepository;
+
+    public BookService(
+            BookRepository bookRepository,
+            LoanRepository loanRepository,
+            ReservationRepository reservationRepository) {
+
         this.bookRepository = bookRepository;
+        this.loanRepository = loanRepository;
+        this.reservationRepository = reservationRepository;
     }
 
     public BookResponse create(BookRequest request) {
@@ -74,10 +92,18 @@ public class BookService {
         return new BookResponse(updatedBook);
     }
 
+    @Transactional
     public void delete(Long id) {
 
         Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new BookNotFoundException(id));
+
+        boolean hasLoans = loanRepository.existsByBookId(id);
+        boolean hasReservations = reservationRepository.existsByBookId(id);
+
+        if (hasLoans || hasReservations) {
+            throw new ResourceHasHistoryException("o livro", id);
+        }
 
         bookRepository.delete(book);
     }

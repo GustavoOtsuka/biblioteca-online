@@ -11,14 +11,36 @@ import br.com.fiap.biblioteca.exception.LibraryUserNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import br.com.fiap.biblioteca.exception.ResourceHasHistoryException;
+import br.com.fiap.biblioteca.repository.LoanRepository;
+import br.com.fiap.biblioteca.repository.ReservationRepository;
+import org.springframework.transaction.annotation.Transactional;
+
+
+import br.com.fiap.biblioteca.exception.ResourceHasHistoryException;
+import br.com.fiap.biblioteca.repository.LoanRepository;
+import br.com.fiap.biblioteca.repository.ReservationRepository;
+
 
 @Service
 public class LibraryUserService {
 
     private final LibraryUserRepository libraryUserRepository;
 
-    public LibraryUserService(LibraryUserRepository libraryUserRepository) {
+    private final LoanRepository loanRepository;
+    private final ReservationRepository reservationRepository;
+
+
+
+
+    public LibraryUserService(
+            LibraryUserRepository libraryUserRepository,
+            LoanRepository loanRepository,
+            ReservationRepository reservationRepository) {
+
         this.libraryUserRepository = libraryUserRepository;
+        this.loanRepository = loanRepository;
+        this.reservationRepository = reservationRepository;
     }
 
     public LibraryUserResponse create(LibraryUserRequest request) {
@@ -70,12 +92,20 @@ public class LibraryUserService {
         return new LibraryUserResponse(updatedUser);
     }
 
+    @Transactional
     public void delete(Long id) {
 
-        LibraryUser libraryUser = libraryUserRepository.findById(id)
+        LibraryUser user = libraryUserRepository.findById(id)
                 .orElseThrow(() -> new LibraryUserNotFoundException(id));
 
-        libraryUserRepository.delete(libraryUser);
+        boolean hasLoans = loanRepository.existsByUserId(id);
+        boolean hasReservations = reservationRepository.existsByUserId(id);
+
+        if (hasLoans || hasReservations) {
+            throw new ResourceHasHistoryException("o usuário", id);
+        }
+
+        libraryUserRepository.delete(user);
     }
 
 }

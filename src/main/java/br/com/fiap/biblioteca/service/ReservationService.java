@@ -121,4 +121,17 @@ public class ReservationService {
         return new ReservationResponse(savedReservation);
     }
 
+    @Transactional(readOnly = true)
+    public Page<ReservationResponse> findByUserId(
+            Long userId,
+            Pageable pageable) {
+
+        if (!libraryUserRepository.existsById(userId)) {
+            throw new LibraryUserNotFoundException(userId);
+        }
+
+        return reservationRepository.findByUserId(userId, pageable)
+                .map(ReservationResponse::new);
+    }
+
 }

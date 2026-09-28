@@ -61,4 +61,15 @@ public class ReservationController {
 
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<Page<ReservationResponse>> findByUserId(
+            @PathVariable Long userId,
+            Pageable pageable) {
+
+        Page<ReservationResponse> response =
+                reservationService.findByUserId(userId, pageable);
+
+        return ResponseEntity.ok(response);
+    }
 }
